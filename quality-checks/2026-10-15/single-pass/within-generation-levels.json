@@ -1,0 +1,26 @@
+[
+  {
+    "start_seconds": 0.0,
+    "speech_dbfs": -17.720288624340355
+  },
+  {
+    "start_seconds": 5.0,
+    "speech_dbfs": -17.23793407386919
+  },
+  {
+    "start_seconds": 10.0,
+    "speech_dbfs": -18.001651664372034
+  },
+  {
+    "start_seconds": 15.0,
+    "speech_dbfs": -19.110376171020086
+  },
+  {
+    "start_seconds": 20.0,
+    "speech_dbfs": -19.542238903192857
+  },
+  {
+    "start_seconds": 25.0,
+    "speech_dbfs": -18.90480097724308
+  }
+]

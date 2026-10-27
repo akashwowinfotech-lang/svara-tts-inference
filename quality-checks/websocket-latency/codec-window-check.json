@@ -1,0 +1,86 @@
+[
+  {
+    "margin_frames": 4,
+    "start_frame": 24,
+    "decode_seconds": 0.1872520509999731,
+    "correlation": 0.9995044848112739,
+    "relative_error_db": -30.040212213443347
+  },
+  {
+    "margin_frames": 4,
+    "start_frame": 80,
+    "decode_seconds": 0.16413497199999938,
+    "correlation": 0.9997636046498809,
+    "relative_error_db": -33.25149866428793
+  },
+  {
+    "margin_frames": 4,
+    "start_frame": 160,
+    "decode_seconds": 0.16700752799999918,
+    "correlation": 0.9997128873519232,
+    "relative_error_db": -32.40796922704644
+  },
+  {
+    "margin_frames": 4,
+    "start_frame": 240,
+    "decode_seconds": 0.16791387899996835,
+    "correlation": 0.999832879140866,
+    "relative_error_db": -34.75871940604575
+  },
+  {
+    "margin_frames": 8,
+    "start_frame": 24,
+    "decode_seconds": 0.2767727429999809,
+    "correlation": 0.9995822279280908,
+    "relative_error_db": -30.780589468574796
+  },
+  {
+    "margin_frames": 8,
+    "start_frame": 80,
+    "decode_seconds": 0.570487111000034,
+    "correlation": 0.9997682200169897,
+    "relative_error_db": -33.33837331041591
+  },
+  {
+    "margin_frames": 8,
+    "start_frame": 160,
+    "decode_seconds": 0.5066085539999676,
+    "correlation": 0.9997078390758133,
+    "relative_error_db": -32.33275232387298
+  },
+  {
+    "margin_frames": 8,
+    "start_frame": 240,
+    "decode_seconds": 0.5813278329999889,
+    "correlation": 0.9998487338841479,
+    "relative_error_db": -35.19224507716997
+  },
+  {
+    "margin_frames": 12,
+    "start_frame": 24,
+    "decode_seconds": 0.71131594000002,
+    "correlation": 0.999583079857899,
+    "relative_error_db": -30.789508368480636
+  },
+  {
+    "margin_frames": 12,
+    "start_frame": 80,
+    "decode_seconds": 0.6859819449999804,
+    "correlation": 0.9997701690869529,
+    "relative_error_db": -33.375152141689355
+  },
+  {
+    "margin_frames": 12,
+    "start_frame": 160,
+    "decode_seconds": 0.4080024410000078,
+    "correlation": 0.9997085237890313,
+    "relative_error_db": -32.34309355111256
+  },
+  {
+    "margin_frames": 12,
+    "start_frame": 240,
+    "decode_seconds": 0.43076309900004617,
+    "correlation": 0.9998341153489465,
+    "relative_error_db": -34.79078970135974
+  }
+]

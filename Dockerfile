@@ -86,6 +86,9 @@ FROM app-deps AS final
 COPY tts_engine/ ./tts_engine/
 COPY api/ ./api/
 COPY assets/ ./assets/
+COPY playground.html ./playground.html
+COPY PUBLIC_API.md developer-guide.html ./
+COPY dashboard.html dashboard.js bootstrap_access.py set-admin-login.py ./
 COPY supervisord.conf /etc/supervisor/conf.d/svara-tts.conf
 
 # Create directories for logs and cache
@@ -99,5 +102,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
     CMD curl -f http://localhost:8080/health || exit 1
 
 # Start supervisord to manage all processes
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/svara-tts.conf"]
-
+CMD ["/bin/bash", "-c", "python3 bootstrap_access.py && exec /usr/bin/supervisord -c /etc/supervisor/conf.d/svara-tts.conf"]

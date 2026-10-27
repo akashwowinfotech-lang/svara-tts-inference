@@ -1,0 +1,58 @@
+{
+  "checks": {
+    "before-http-pcm": {
+      "label": "before-http-pcm",
+      "format": "pcm",
+      "headers_seconds": 0.03179081899997982,
+      "first_audio_payload_seconds": 25.746743901999935,
+      "total_seconds": 25.79771922699979,
+      "bytes": 1421312
+    },
+    "before-http-mp3": {
+      "label": "before-http-mp3",
+      "format": "mp3",
+      "headers_seconds": 0.08607463499993173,
+      "first_audio_payload_seconds": 39.435836321999886,
+      "total_seconds": 39.54484235199993,
+      "bytes": 187629
+    },
+    "after-http-pcm": {
+      "label": "after-http-pcm",
+      "format": "pcm",
+      "headers_seconds": 0.030082381999818608,
+      "first_audio_payload_seconds": 1.21678737000002,
+      "total_seconds": 16.66174384099986,
+      "bytes": 1466368
+    },
+    "after-http-mp3": {
+      "label": "after-http-mp3",
+      "format": "mp3",
+      "headers_seconds": 0.07913541600009921,
+      "first_audio_payload_seconds": 1.0903685620000942,
+      "total_seconds": 24.462529302999883,
+      "bytes": 187629
+    },
+    "after-ws": {
+      "label": "after-ws",
+      "voice": "mr_female",
+      "speed": 1.0,
+      "first_audio_seconds": 1.3928299549997973,
+      "total_seconds": 16.85705275500004,
+      "audio_seconds": 29.696,
+      "playback_underruns": []
+    },
+    "after-ws-repeat": {
+      "label": "after-ws-repeat",
+      "voice": "mr_female",
+      "speed": 1.0,
+      "first_audio_seconds": 1.0497728750001443,
+      "total_seconds": 27.92162446400016,
+      "audio_seconds": 46.848,
+      "playback_underruns": []
+    }
+  },
+  "regression_tests_passed": 42,
+  "service": "speech-api.service active, public health healthy",
+  "quality": "Same model/voice/phrase/sampling/codec defaults; full sample retention and identical decoded format encoding checked",
+  "scope": "WebSocket and HTTP stream:true; non-streaming phrase preparation retained"
+}

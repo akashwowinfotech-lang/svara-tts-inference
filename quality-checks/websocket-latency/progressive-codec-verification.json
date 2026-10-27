@@ -1,0 +1,14 @@
+{
+  "samples_full": 712704,
+  "samples_progressive": 712704,
+  "correlation": 0.9997269459807661,
+  "relative_error_db": -32.626876012869566,
+  "decode_seconds_total": 5.489783348000174,
+  "decode_seconds_max": 0.3002446039999995,
+  "decode_seconds_median": 0.27186425250005186,
+  "audio_seconds": 29.696,
+  "fixed_gain": 0.9235768822263577,
+  "peak_knee_fraction": 0.0,
+  "boundary_jumps_max": 2985.0,
+  "ordinary_delta_p999": 6794.298000000068
+}

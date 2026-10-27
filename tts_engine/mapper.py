@@ -59,7 +59,7 @@ class SvaraMapper:
     def feed_raw(self, raw: int) -> Optional[List[int]]:
         """Feed a raw token number. Returns a window when ready, else None."""
         code = raw_to_code_id(raw, self.good)
-        if code <= 0:
+        if not 0 <= code < 4096:
             return None
         self.codes.append(code)
         self.good += 1
@@ -75,3 +75,34 @@ class SvaraMapper:
             if win is not None:
                 out.append(win)
         return out
+
+
+class SvaraFrameParser:
+    """Read fragmented token text and retain only aligned, complete SNAC frames."""
+
+    def __init__(self):
+        self.text_tail = ""
+        self.frame: List[int] = []
+        self.codes: List[int] = []
+
+    def feed_text(self, text: str) -> None:
+        self.text_tail += text
+        matches = list(_TOKEN_RE.finditer(self.text_tail))
+        for match in matches:
+            raw = int(match.group(1)) - 10
+            if not 0 <= raw < 7 * 4096:
+                continue
+            band, code = divmod(raw, 4096)
+            if band != len(self.frame):
+                self.frame.clear()
+                if band != 0:
+                    continue
+            self.frame.append(code)
+            if len(self.frame) == 7:
+                self.codes.extend(self.frame)
+                self.frame.clear()
+        if matches:
+            self.text_tail = self.text_tail[matches[-1].end():]
+        # A transport delta can end partway through a special token.
+        last_open = self.text_tail.rfind('<')
+        self.text_tail = self.text_tail[last_open:][-64:] if last_open >= 0 else ""

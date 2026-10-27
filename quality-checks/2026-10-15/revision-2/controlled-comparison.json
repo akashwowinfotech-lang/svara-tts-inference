@@ -1,0 +1,20 @@
+[
+  {
+    "voice": "hi_female",
+    "native_seconds": 9.557333333333334,
+    "normal_speed_bit_exact": true,
+    "stable_volume_correlation": 0.9999999722359415,
+    "original_aligned_correlation": 0.9964074457135824
+  },
+  {
+    "voice": "mr_female",
+    "native_seconds": 10.154666666666667,
+    "normal_speed_bit_exact": true,
+    "stable_volume_correlation": 0.9999999949276311,
+    "original_aligned_correlation": null,
+    "speed_durations": {
+      "0.75": 13.509333333333334,
+      "1.25": 8.106666666666667
+    }
+  }
+]

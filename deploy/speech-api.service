@@ -1,0 +1,27 @@
+[Unit]
+Description=Speech API and dashboard
+Wants=network-online.target
+After=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=wowbharat
+Group=wowbharat
+WorkingDirectory=/home/wowbharat/WOWBHARAT/TTS/upstream-svara
+Environment=HOME=/home/wowbharat
+Environment=API_HOST=127.0.0.1
+Environment=API_PORT=8088
+Environment=ALLOWED_HOSTS=api.tts.ganas.ai,127.0.0.1,localhost
+Environment=TRUSTED_PROXY_IPS=127.0.0.1/32,::1/128
+ExecStart=/home/wowbharat/WOWBHARAT/TTS/upstream-svara/run-local.sh
+Restart=always
+RestartSec=15s
+KillMode=control-group
+TimeoutStopSec=45s
+UMask=0077
+LimitNOFILE=65535
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

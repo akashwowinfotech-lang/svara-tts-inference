@@ -1,0 +1,34 @@
+[
+  {
+    "voice": "hi_female",
+    "audio_seconds": 9.301333333333334,
+    "wall_seconds": 4.628,
+    "first_audio": 0.476,
+    "max_delivery_gap": 0.05900000000000016,
+    "chunks": 106
+  },
+  {
+    "voice": "mr_female",
+    "audio_seconds": 9.813333333333333,
+    "wall_seconds": 5.381,
+    "first_audio": 0.431,
+    "max_delivery_gap": 0.08299999999999996,
+    "chunks": 112
+  },
+  {
+    "voice": "hi_male",
+    "audio_seconds": 8.448,
+    "wall_seconds": 4.248,
+    "first_audio": 0.453,
+    "max_delivery_gap": 0.052000000000000046,
+    "chunks": 96
+  },
+  {
+    "voice": "mr_male",
+    "audio_seconds": 8.106666666666667,
+    "wall_seconds": 4.466,
+    "first_audio": 0.5,
+    "max_delivery_gap": 0.05499999999999994,
+    "chunks": 92
+  }
+]

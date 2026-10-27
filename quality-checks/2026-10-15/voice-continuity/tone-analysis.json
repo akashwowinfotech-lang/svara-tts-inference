@@ -1,0 +1,38 @@
+[
+  {
+    "section": "opening",
+    "median_pitch_hz": 242.35023708172005,
+    "pitch_p10_p90_hz": [
+      196.84956082712893,
+      312.47919993646246
+    ],
+    "voiced_frames": 519
+  },
+  {
+    "section": "middle",
+    "median_pitch_hz": 235.45099627104005,
+    "pitch_p10_p90_hz": [
+      202.1508964255977,
+      301.83501125199945
+    ],
+    "voiced_frames": 657
+  },
+  {
+    "section": "closing",
+    "median_pitch_hz": 231.4060890831793,
+    "pitch_p10_p90_hz": [
+      180.4078760102772,
+      280.1622023498999
+    ],
+    "voiced_frames": 590
+  },
+  {
+    "section": "anchored_closing",
+    "median_pitch_hz": 243.75415772291475,
+    "pitch_p10_p90_hz": [
+      200.29043054093617,
+      304.8145727077098
+    ],
+    "voiced_frames": 674
+  }
+]

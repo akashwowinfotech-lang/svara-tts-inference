@@ -1,0 +1,10 @@
+{
+  "voice": "en_male",
+  "input": "Nature supports our lives every day. Trees, rivers, hills and wildlife make the world beautiful. They give us clean air, fresh water and food. Cutting down forests and increasing pollution put this balance at risk. We should protect natural resources and plant more trees so that future generations can enjoy a healthy environment.",
+  "seconds": 21.333333333333332,
+  "generation_chunks": 1,
+  "first_audio_seconds": 15.006975721975323,
+  "wall_seconds": 15.071915478998562,
+  "peak_dbfs": -0.3546526523114336,
+  "clipped_samples": 0
+}

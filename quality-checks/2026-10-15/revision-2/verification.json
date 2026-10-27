@@ -1,0 +1,18 @@
+[
+  {
+    "voice": "hi_female",
+    "speed": 1.0,
+    "steady_volume": false,
+    "seconds": 9.557333333333334,
+    "wall_seconds": 5.768198937992565,
+    "file": "hi_female-speed-1.0-steady-0.wav"
+  },
+  {
+    "voice": "hi_female",
+    "speed": 1.0,
+    "steady_volume": true,
+    "seconds": 9.130666666666666,
+    "wall_seconds": 5.433833642018726,
+    "file": "hi_female-speed-1.0-steady-1.wav"
+  }
+]

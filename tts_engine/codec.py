@@ -28,7 +28,7 @@ def _get_or_load_snac_model(device: str, model_name: str = "hubertsiuzdak/snac_2
     cache_key = f"{model_name}_{device}"
 
     if cache_key not in _SNAC_MODEL_CACHE:
-        logger.info(f"Loading SNAC model: {model_name} on device: {device}")
+        logger.info(f"Loading audio codec on device: {device}")
         model = SNAC.from_pretrained(model_name).eval().to(device)
         if os.getenv("SNAC_COMPILE", "true").lower() in ("true", "1", "yes"):
             try:
@@ -48,7 +48,7 @@ def get_or_load_tokenizer(model_name: str) -> AutoTokenizer:
     Automatically uses HF_TOKEN environment variable if available for private models.
     """
     if model_name not in _TOKENIZER_CACHE:
-        logger.info(f"Loading tokenizer: {model_name}")
+        logger.info("Loading tokenizer")
         hf_token = os.getenv("HF_TOKEN")
         if hf_token:
             tokenizer = AutoTokenizer.from_pretrained(model_name, token=hf_token)
@@ -199,7 +199,8 @@ class SNACCodec:
         
         return all_codes
     
-    def decode_window(self, window: List[int]) -> bytes:
+    def decode_window(self, window: List[int], start_sample: int = 2048,
+                      end_sample: Optional[int] = 4096) -> bytes:
         """
         Decode a sliding window of Svara-TTS codes into PCM16 bytes.
 
@@ -228,18 +229,21 @@ class SNACCodec:
 
         # Validate range [0, 4096]
         if (
-            torch.any((codes_0 < 0) | (codes_0 > 4096)) or
-            torch.any((codes_1 < 0) | (codes_1 > 4096)) or
-            torch.any((codes_2 < 0) | (codes_2 > 4096))
+            torch.any((codes_0 < 0) | (codes_0 >= 4096)) or
+            torch.any((codes_1 < 0) | (codes_1 >= 4096)) or
+            torch.any((codes_2 < 0) | (codes_2 >= 4096))
         ):
             return b""
 
         with torch.inference_mode():
             audio = self.model.decode([codes_0, codes_1, codes_2])  # [1, 1, T]
             # Keep the synthesis region (matches SNAC examples)
-            audio = audio[:, :, 2048:4096]
+            audio = audio[:, :, start_sample:end_sample]
 
         x = audio.detach().float().cpu().numpy().reshape(-1)
         pcm16 = (np.clip(x, -1.0, 1.0) * 32767.0).astype(np.int16)
         return pcm16.tobytes()
 
+    def decode_codes(self, codes: List[int]) -> bytes:
+        """Decode a complete phrase, retaining its opening and final phonemes."""
+        return self.decode_window(codes, start_sample=0, end_sample=None)

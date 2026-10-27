@@ -1,0 +1,27 @@
+[
+  {
+    "ok": true,
+    "total_s": 6.255,
+    "post_audio_s": 1.107,
+    "queue_s": 0.0,
+    "infer_s": 1.105,
+    "text": "<en-in> Hello welcome to Ganas Please tell me how I can help you today",
+    "disallowed": false
+  },
+  {
+    "ok": true,
+    "total_s": 6.254,
+    "post_audio_s": 1.108,
+    "queue_s": 0.0,
+    "infer_s": 1.106,
+    "text": "<en-in> Hello welcome to Ganas Please tell me how I can help you today",
+    "disallowed": false
+  },
+  {
+    "ok": true,
+    "first_s": 1.054,
+    "total_s": 2.971,
+    "audio_s": 5.035,
+    "underrun_s": 0
+  }
+]

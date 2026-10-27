@@ -1,0 +1,99 @@
+import asyncio
+import unittest
+from types import SimpleNamespace
+from unittest.mock import patch
+
+from tts_engine.constants import AUDIO_TOKEN_OFFSETS
+from tts_engine.pacing import continuity_chunks, phrase_chunks, speech_units
+
+
+class ContinuityPlanningTests(unittest.TestCase):
+    def test_complete_opening_sentence_and_all_remaining_words_are_retained(self):
+        text = ('निसर्ग हा माणसाचा खरा मित्र आहे. झाडे, नद्या, डोंगर आणि पशू-पक्ष्यांनी '
+                'मिळून हा सुंदर निसर्ग तयार झाला आहे. निसर्गामुळे आपल्याला शुद्ध हवा, '
+                'पाणी आणि जगण्यासाठी अन्न मिळते. जर आपण आता निसर्गाचे रक्षण केले नाही, '
+                'तर भविष्यात मोठे संकट येऊ शकते.')
+        parts = continuity_chunks(text)
+        self.assertEqual(parts[0], 'निसर्ग हा माणसाचा खरा मित्र आहे.')
+        self.assertEqual(' '.join(parts), text)
+        self.assertLessEqual(speech_units(parts[0]), 24)
+
+    def test_long_opening_is_bounded_and_short_requests_retain_existing_chunks(self):
+        text = ' '.join(['Please speak clearly and naturally'] * 20)
+        parts = continuity_chunks(text)
+        self.assertLessEqual(len(parts[0]), 90)
+        self.assertLessEqual(speech_units(parts[0]), 24)
+        self.assertEqual(' '.join(parts), text)
+        text = 'नमस्कार, तुमचे स्वागत आहे.'
+        self.assertEqual(continuity_chunks(text), phrase_chunks(text))
+
+
+class ContinuityInferenceTests(unittest.IsolatedAsyncioTestCase):
+    async def test_generated_codes_and_preset_are_retained_without_reencoding(self):
+        from tts_engine.orchestrator import SvaraTTSOrchestrator
+
+        class Transport:
+            async def astream(self, prompt, **kwargs):
+                self.last_options = kwargs
+                yield ''.join(f'<custom_token_{10 + band * 4096}>' for band in range(7))
+
+        core = SvaraTTSOrchestrator.__new__(SvaraTTSOrchestrator)
+        core.speaker_id = 'Marathi (Female)'
+        core.tokenizer = SimpleNamespace(encode=lambda *args, **kwargs: [1] * 500)
+        core.transport = Transport()
+        core.codec = SimpleNamespace(decode_codes=lambda codes: b'\0\0' * 2048)
+        reference = []
+        with patch('tts_engine.orchestrator.svara_text_to_tokens', return_value='prompt') as build:
+            output = [part async for part in core._astream_one('opening', capture_reference=reference)]
+            self.assertTrue(output)
+            self.assertEqual(reference, AUDIO_TOKEN_OFFSETS)
+            output = [part async for part in core._astream_one(
+                'closing', audio_reference=reference, reference_text='opening', continuation_reference=True)]
+            args = build.call_args.kwargs
+            self.assertEqual(args['text'], 'Marathi (Female): closing')
+            self.assertEqual(args['transcript'], 'Marathi (Female): opening')
+            self.assertEqual(args['audio_tokens'], AUDIO_TOKEN_OFFSETS)
+            self.assertLessEqual(500 + 8 + core.transport.last_options['max_tokens'], 2048)
+            core.tokenizer.encode = lambda *args, **kwargs: [1] * 2000
+            with self.assertRaises(ValueError):
+                [part async for part in core._astream_one('closing', audio_reference=reference)]
+
+    async def test_concurrent_requests_reuse_their_own_opening_only(self):
+        from tts_engine.orchestrator import SvaraTTSOrchestrator
+
+        class Core(SvaraTTSOrchestrator):
+            def __init__(self):
+                self.max_chunk_chars = 200
+                self.calls = []
+
+            async def _astream_one(self, text, **kwargs):
+                await asyncio.sleep(0)
+                self.calls.append((text, dict(kwargs, audio_reference=list(kwargs['audio_reference'] or []))))
+                if kwargs['capture_reference'] is not None:
+                    kwargs['capture_reference'][:] = [1 if text.startswith('A') else 2]
+                yield bytes(4800)
+
+        core = Core()
+
+        async def consume(name, **kwargs):
+            return b''.join([part async for part in core.astream(name, steady_volume=False, **kwargs)])
+
+        with patch('tts_engine.orchestrator.continuity_chunks',
+                   side_effect=lambda text, **kwargs: [text + ' opening', text + ' middle', text + ' closing']):
+            await asyncio.gather(consume('A'), consume('B'))
+        for text, args in core.calls:
+            if text.endswith('opening'):
+                self.assertFalse(args['continuation_reference'])
+            else:
+                self.assertEqual(args['audio_reference'], [1 if text.startswith('A') else 2])
+                self.assertEqual(args['reference_text'], text[0] + ' opening')
+                self.assertTrue(args['continuation_reference'])
+        core.calls.clear()
+        await consume('A', audio_reference=[99], reference_text='User reference')
+        self.assertEqual(core.calls[0][1]['audio_reference'], [99])
+        self.assertFalse(core.calls[0][1]['continuation_reference'])
+        self.assertEqual(core.calls[0][1]['reference_text'], 'User reference')
+
+
+if __name__ == '__main__':
+    unittest.main()

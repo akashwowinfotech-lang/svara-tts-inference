@@ -1,0 +1,131 @@
+{
+  "wss_2": {
+    "results": [
+      {
+        "ok": true,
+        "total_s": 5.575,
+        "post_audio_s": 0.431,
+        "queue_s": 0.0,
+        "infer_s": 0.429,
+        "text": "<en-in> Hello welcome to Ganas Please tell me how I can help you today",
+        "disallowed": false
+      },
+      {
+        "ok": true,
+        "total_s": 5.576,
+        "post_audio_s": 0.429,
+        "queue_s": 0.0,
+        "infer_s": 0.427,
+        "text": "<en-in> Hello welcome to Ganas Please tell me how I can help you today",
+        "disallowed": false
+      }
+    ],
+    "batch_passes": 1
+  },
+  "wss_4": {
+    "results": [
+      {
+        "ok": true,
+        "total_s": 6.439,
+        "post_audio_s": 1.266,
+        "queue_s": 0.836,
+        "infer_s": 0.428,
+        "text": "<en-in> Hello welcome to Ganas Please tell me how I can help you today",
+        "disallowed": false
+      },
+      {
+        "ok": true,
+        "total_s": 6.44,
+        "post_audio_s": 1.27,
+        "queue_s": 0.84,
+        "infer_s": 0.428,
+        "text": "<en-in> Hello welcome to Ganas Please tell me how I can help you today",
+        "disallowed": false
+      },
+      {
+        "ok": true,
+        "total_s": 6.01,
+        "post_audio_s": 0.846,
+        "queue_s": 0.0,
+        "infer_s": 0.844,
+        "text": "<en-in> Hello welcome to Ganas Please tell me how I can help you today",
+        "disallowed": false
+      },
+      {
+        "ok": true,
+        "total_s": 6.009,
+        "post_audio_s": 0.849,
+        "queue_s": 0.0,
+        "infer_s": 0.847,
+        "text": "<en-in> Hello welcome to Ganas Please tell me how I can help you today",
+        "disallowed": false
+      }
+    ],
+    "batch_passes": 2
+  },
+  "mixed_protocols": [
+    {
+      "ok": true,
+      "total_s": 5.944,
+      "post_audio_s": 0.794,
+      "queue_s": 0.364,
+      "infer_s": 0.429,
+      "text": "<en-in> Hello welcome to Ganas Please tell me how I can help you today",
+      "disallowed": false
+    },
+    {
+      "ok": true,
+      "total_s": 5.943,
+      "post_audio_s": 0.798,
+      "queue_s": 0.366,
+      "infer_s": 0.429,
+      "text": "<en-in> Hello welcome to Ganas Please tell me how I can help you today",
+      "disallowed": false
+    },
+    {
+      "status": 200,
+      "seconds": 0.512,
+      "body": {
+        "text": "<en-in> Hello welcome to Ganas Please tell me how I can help you today",
+        "duration_seconds": 0.423,
+        "audio_seconds": 5.035,
+        "truncated": false,
+        "avg_logprob": -0.0783,
+        "is_low_confidence": false,
+        "is_likely_hallucination": false,
+        "is_disallowed_script": false
+      }
+    },
+    {
+      "status": 200,
+      "seconds": 0.511,
+      "body": {
+        "text": "<en-in> Hello welcome to Ganas Please tell me how I can help you today",
+        "duration_seconds": 0.43,
+        "audio_seconds": 5.035,
+        "truncated": false,
+        "avg_logprob": -0.0783,
+        "is_low_confidence": false,
+        "is_likely_hallucination": false,
+        "is_disallowed_script": false
+      }
+    }
+  ],
+  "ready": {
+    "status": "ready",
+    "device": "cuda",
+    "supported_languages": [
+      "en",
+      "hi",
+      "kn",
+      "mr",
+      "te"
+    ],
+    "max_concurrent_inference": 2,
+    "inference_batch_size": 2,
+    "batch_memory_fallbacks": 0,
+    "completed_batch_passes": 18,
+    "batched_utterances": 36,
+    "max_pending": 8
+  }
+}

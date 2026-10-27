@@ -1,0 +1,37 @@
+[
+  {
+    "voice": "mr_female",
+    "correlation_first_1_365_seconds": 0.9998678976038914,
+    "calibration_gain_change_db": 0.0038512250887734797
+  },
+  {
+    "voice": "mr_male",
+    "correlation_first_1_365_seconds": 0.9997533714890792,
+    "calibration_gain_change_db": -0.003096553744949787
+  },
+  {
+    "voice": "hi_female",
+    "correlation_first_1_365_seconds": 0.9999032859045744,
+    "calibration_gain_change_db": 0.009727859865127461
+  },
+  {
+    "voice": "hi_male",
+    "correlation_first_1_365_seconds": 0.9998388308498442,
+    "calibration_gain_change_db": -0.0014133224350607468
+  },
+  {
+    "voice": "en_female",
+    "correlation_first_1_365_seconds": 0.999749329259569,
+    "calibration_gain_change_db": -6.685394659012042e-06
+  },
+  {
+    "voice": "en_male",
+    "correlation_first_1_365_seconds": 0.9999055489761743,
+    "calibration_gain_change_db": -0.00460527375829452
+  },
+  {
+    "voice": "ta_female",
+    "correlation_first_1_365_seconds": 0.9999269370400303,
+    "calibration_gain_change_db": -0.017498889183677622
+  }
+]

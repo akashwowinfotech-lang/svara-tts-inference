@@ -1,0 +1,62 @@
+[
+  {
+    "voice": "mr_female",
+    "input": "निसर्ग हा माणसाचा खरा मित्र आहे. झाडे, नद्या, डोंगर आणि पशू-पक्ष्यांनी मिळून हा सुंदर निसर्ग तयार झाला आहे. निसर्गामुळे आपल्याला शुद्ध हवा, पाणी आणि जगण्यासाठी अन्न मिळते. पण आजच्या काळात माणूस आपल्या स्वार्थासाठी जंगले तोडत आहे आणि प्रदूषण वाढवत आहे. जर आपण आता निसर्गाचे रक्षण केले नाही, तर भविष्यात मोठे संकट येऊ शकते. म्हणून आपण जास्तीत जास्त झाडे लावली पाहिजेत आणि पर्यावरणाचा समतोल राखला पाहिजे.",
+    "seconds": 30.378666666666668,
+    "generation_chunks": 1,
+    "first_audio_seconds": 19.385591278987704,
+    "wall_seconds": 19.430444985977374,
+    "peak_dbfs": -1.411559115981456,
+    "clipped_samples": 0
+  },
+  {
+    "voice": "mr_male",
+    "input": "निसर्ग हा माणसाचा खरा मित्र आहे. झाडे, नद्या, डोंगर आणि पशू-पक्ष्यांनी मिळून हा सुंदर निसर्ग तयार झाला आहे. निसर्गामुळे आपल्याला शुद्ध हवा, पाणी आणि जगण्यासाठी अन्न मिळते. पण आजच्या काळात माणूस आपल्या स्वार्थासाठी जंगले तोडत आहे आणि प्रदूषण वाढवत आहे. जर आपण आता निसर्गाचे रक्षण केले नाही, तर भविष्यात मोठे संकट येऊ शकते. म्हणून आपण जास्तीत जास्त झाडे लावली पाहिजेत आणि पर्यावरणाचा समतोल राखला पाहिजे.",
+    "seconds": 28.586666666666666,
+    "generation_chunks": 1,
+    "first_audio_seconds": 21.56886474500061,
+    "wall_seconds": 21.611331736989086,
+    "peak_dbfs": -0.3546526523114336,
+    "clipped_samples": 0
+  },
+  {
+    "voice": "hi_female",
+    "input": "प्रकृति हमारे जीवन का आधार है। पेड़, नदियाँ, पहाड़ और पशु-पक्षी मिलकर हमारे आसपास की दुनिया को सुंदर बनाते हैं। हमें प्रकृति से स्वच्छ हवा, पीने का पानी और भोजन मिलता है। आज जंगलों की कटाई से पर्यावरण को नुकसान हो रहा है। यदि हम समय पर प्रकृति की रक्षा नहीं करेंगे, तो आने वाली पीढ़ियों को कठिनाइयों का सामना करना पड़ेगा। इसलिए हमें अधिक पेड़ लगाने चाहिए और प्राकृतिक संसाधनों का ध्यान रखना चाहिए।",
+    "seconds": 32.42666666666667,
+    "generation_chunks": 1,
+    "first_audio_seconds": 24.24179266599822,
+    "wall_seconds": 24.280064767983276,
+    "peak_dbfs": -0.3546526523114336,
+    "clipped_samples": 0
+  },
+  {
+    "voice": "hi_male",
+    "input": "प्रकृति हमारे जीवन का आधार है। पेड़, नदियाँ, पहाड़ और पशु-पक्षी मिलकर हमारे आसपास की दुनिया को सुंदर बनाते हैं। हमें प्रकृति से स्वच्छ हवा, पीने का पानी और भोजन मिलता है। आज जंगलों की कटाई से पर्यावरण को नुकसान हो रहा है। यदि हम समय पर प्रकृति की रक्षा नहीं करेंगे, तो आने वाली पीढ़ियों को कठिनाइयों का सामना करना पड़ेगा। इसलिए हमें अधिक पेड़ लगाने चाहिए और प्राकृतिक संसाधनों का ध्यान रखना चाहिए।",
+    "seconds": 47.18933333333333,
+    "generation_chunks": 1,
+    "first_audio_seconds": 35.61819843700505,
+    "wall_seconds": 35.70489469799213,
+    "peak_dbfs": -0.3546526523114336,
+    "clipped_samples": 0
+  },
+  {
+    "voice": "en_female",
+    "input": "Nature supports our lives every day. Trees, rivers, hills and wildlife make the world beautiful. They give us clean air, fresh water and food. Cutting down forests and increasing pollution put this balance at risk. We should protect natural resources and plant more trees so that future generations can enjoy a healthy environment.",
+    "seconds": 23.21066666666667,
+    "generation_chunks": 1,
+    "first_audio_seconds": 18.96197478999966,
+    "wall_seconds": 19.008053796977038,
+    "peak_dbfs": -0.3546526523114336,
+    "clipped_samples": 0
+  },
+  {
+    "voice": "en_male",
+    "input": "Nature supports our lives every day. Trees, rivers, hills and wildlife make the world beautiful. They give us clean air, fresh water and food. Cutting down forests and increasing pollution put this balance at risk. We should protect natural resources and plant more trees so that future generations can enjoy a healthy environment.",
+    "seconds": 21.333333333333332,
+    "generation_chunks": 1,
+    "first_audio_seconds": 15.006975721975323,
+    "wall_seconds": 15.071915478998562,
+    "peak_dbfs": -0.3546526523114336,
+    "clipped_samples": 0
+  }
+]

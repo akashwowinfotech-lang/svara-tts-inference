@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Speech API integration guide for HTTPS and WebSocket streaming.">
+  <title>Speech API integration guide</title>
+  <style>
+    :root { font: 16px/1.55 system-ui,sans-serif; color:#e9f1fb; background:#0d1422; }
+    * { box-sizing:border-box; }
+    body { margin:0; }
+    a { color:#83dfc5; }
+    .layout { display:grid; grid-template-columns:230px minmax(0,900px); gap:2.5rem; max-width:1230px; margin:auto; padding:2rem 1.2rem 5rem; }
+    nav { position:sticky; top:1.5rem; align-self:start; display:grid; gap:.15rem; max-height:90vh; overflow:auto; }
+    nav strong { color:#fff; margin-bottom:.6rem; }
+    nav a { color:#a9bbd2; padding:.35rem .5rem; text-decoration:none; border-radius:6px; }
+    nav a:hover,nav a:focus { color:#fff; background:#213149; }
+    article { min-width:0; }
+    h1 { font-size:2.25rem; line-height:1.2; margin:0 0 1rem; }
+    h2 { font-size:1.45rem; margin:2.4rem 0 .6rem; padding-top:.3rem; border-top:1px solid #32445d; }
+    h3 { font-size:1.15rem; margin:1.6rem 0 .5rem; }
+    p,li { color:#c4d0df; }
+    strong { color:#f5f8fc; }
+    code { font: .9em ui-monospace,SFMono-Regular,Consolas,monospace; background:#1b2a3e; padding:.1rem .25rem; border-radius:4px; overflow-wrap:anywhere; }
+    pre { overflow:auto; padding:1rem; background:#111e30; border:1px solid #334963; border-radius:10px; line-height:1.5; }
+    pre code { background:none; padding:0; overflow-wrap:normal; }
+    table { display:block; overflow-x:auto; border-collapse:collapse; width:100%; margin:1rem 0; }
+    th,td { padding:.6rem .7rem; text-align:left; border:1px solid #30425b; vertical-align:top; min-width:110px; }
+    th { background:#1b2b42; color:#eaf5ff; }
+    td { color:#c4d0df; }
+    blockquote { border-left:3px solid #78dfbd; margin:1rem 0; padding:.1rem 1rem; background:#172538; }
+    .download { display:inline-block; margin-top:1.5rem; font-size:.92rem; }
+    @media(max-width:850px) { .layout { display:block; } nav { position:static; display:flex; flex-wrap:wrap; margin-bottom:1.8rem; } nav strong { width:100%; } nav a { padding:.25rem .4rem; } }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <nav aria-label="Guide sections"><strong>On this page</strong><a href="#quick-start">Quick start</a>
+<a href="#endpoints">Endpoints</a>
+<a href="#voices">Voices</a>
+<a href="#http-speech-generation">HTTP speech generation</a>
+<a href="#websocket-streaming">WebSocket streaming</a>
+<a href="#errors-and-retries">Errors and retries</a><a class="download" href="/integration.md" download>Download Markdown</a></nav>
+    <article><h1 id="speech-api-developer-integration-guide">Speech API — developer integration guide</h1>
+<p>This guide covers the public speech endpoints. Use the API key issued to your application. Keep it on your server, send it only over HTTPS/WSS, and never place it in a URL or a public source repository.</p>
+<p><strong>Base URL:</strong> <code>https://api.tts.ganas.ai</code><br />
+<strong>WebSocket URL:</strong> <code>wss://api.tts.ganas.ai/v1/audio/speech/ws</code><br />
+<strong>API version:</strong> <code>v1</code></p>
+<h2 id="quick-start">Quick start</h2>
+<p>Set your client key in a local environment variable:</p>
+<pre><code class="language-bash">export SPEECH_API_KEY='YOUR_CLIENT_KEY'
+</code></pre>
+<p>List available voices:</p>
+<pre><code class="language-bash">curl --fail-with-body 'https://api.tts.ganas.ai/v1/voices' \
+  -H &quot;Authorization: Bearer $SPEECH_API_KEY&quot;
+</code></pre>
+<p>Generate an MP3 file:</p>
+<pre><code class="language-bash">curl --fail-with-body 'https://api.tts.ganas.ai/v1/audio/speech' \
+  -H &quot;Authorization: Bearer $SPEECH_API_KEY&quot; \
+  -H 'Content-Type: application/json' \
+  --data '{&quot;model&quot;:&quot;speech&quot;,&quot;input&quot;:&quot;नमस्ते! आपका स्वागत है।&quot;,&quot;voice&quot;:&quot;hi_female&quot;,&quot;response_format&quot;:&quot;mp3&quot;}' \
+  --output speech.mp3
+</code></pre>
+<h2 id="endpoints">Endpoints</h2>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Purpose</th>
+<th>Authentication</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET</code></td>
+<td><code>/health</code></td>
+<td>Readiness check; returns <code>{&quot;status&quot;:&quot;healthy&quot;}</code></td>
+<td>None</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/v1/voices</code></td>
+<td>List voice IDs and metadata</td>
+<td><code>Authorization: Bearer CLIENT_KEY</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/v1/audio/speech</code></td>
+<td>Generate audio as one response or an HTTP stream</td>
+<td><code>Authorization: Bearer CLIENT_KEY</code></td>
+</tr>
+<tr>
+<td>WebSocket</td>
+<td><code>/v1/audio/speech/ws</code></td>
+<td>Stream raw PCM audio frames</td>
+<td><code>api_key</code> in the first JSON message</td>
+</tr>
+</tbody>
+</table>
+<p>For HTTP POST requests, send <code>Content-Type: application/json</code>. An API key may also be restricted by source IP, expiry, requests per minute, and simultaneous speech requests. A WebSocket connection accepts <strong>one utterance</strong>; open a new connection for each request.</p>
+<p>When speech capacity is busy, requests may wait in a shared queue for up to 30 seconds before generation starts. Scheduling uses the priority assigned to the client key; it cannot be overridden in a speech request. Waiting time is part of time to first audio. Active streams finish normally. Queue capacity and per-key waiting limits are bounded; a full queue or wait timeout returns HTTP <code>429</code>, or a WebSocket error frame. Set your read timeout to cover both queue wait and generation, and retry busy responses with backoff and jitter.</p>
+<h2 id="voices">Voices</h2>
+<p><code>GET /v1/voices</code> returns a <code>voices</code> array. Each item has <code>voice_id</code>, <code>name</code>, <code>languages</code>, <code>language_code</code>, and optional <code>gender</code> and <code>description</code> fields. Use <code>voice_id</code> in speech requests. Always fetch this endpoint if you need the complete current catalog.</p>
+<pre><code class="language-json">{
+  &quot;voices&quot;: [
+    {
+      &quot;voice_id&quot;: &quot;hi_female&quot;,
+      &quot;name&quot;: &quot;Hindi (Female)&quot;,
+      &quot;languages&quot;: [&quot;hi&quot;],
+      &quot;language_code&quot;: &quot;hi&quot;,
+      &quot;gender&quot;: &quot;female&quot;
+    }
+  ]
+}
+</code></pre>
+<p>The core male/female IDs for the six main languages are:</p>
+<table>
+<thead>
+<tr>
+<th>Language</th>
+<th>Male</th>
+<th>Female</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>English (Indian)</td>
+<td><code>en_male</code></td>
+<td><code>en_female</code></td>
+</tr>
+<tr>
+<td>Hindi</td>
+<td><code>hi_male</code></td>
+<td><code>hi_female</code></td>
+</tr>
+<tr>
+<td>Marathi</td>
+<td><code>mr_male</code></td>
+<td><code>mr_female</code></td>
+</tr>
+<tr>
+<td>Gujarati</td>
+<td><code>gu_male</code></td>
+<td><code>gu_female</code></td>
+</tr>
+<tr>
+<td>Kannada</td>
+<td><code>kn_male</code></td>
+<td><code>kn_female</code></td>
+</tr>
+<tr>
+<td>Telugu</td>
+<td><code>te_male</code></td>
+<td><code>te_female</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="http-speech-generation">HTTP speech generation</h2>
+<p><code>POST /v1/audio/speech</code> returns audio bytes, not JSON. <code>stream: false</code> waits for the complete result; <code>stream: true</code> delivers audio while the model is still generating the phrase. Decoding retains surrounding codec context, every opening/ending sample, and one voice-model generation per phrase. The response media type depends on <code>response_format</code>.</p>
+<p>The user-approved Marathi female preset now keeps fitting paragraphs in one
+generation by default. It permits up to 1000 characters and an estimated 160
+spoken units in the 4096-token context, with an output budget up to the available
+context. Other presets retain their 200-character / 60-unit / 2048-output-token
+defaults: an expanded Hindi male test repeated its ending, so a universal rollout
+has not been accepted. Explicit <code>chunk_size</code> and <code>max_tokens</code> options remain
+available across all 38 native presets / 19 languages for comparisons. These
+options do not certify pronunciation or prevent every repetition. Longer text
+still splits and can change voice between generations. Larger generations take
+longer before their first audio.</p>
+<p>Node.js 18+ example:</p>
+<pre><code class="language-javascript">import { writeFile } from 'node:fs/promises';
+
+const response = await fetch('https://api.tts.ganas.ai/v1/audio/speech', {
+  method: 'POST',
+  headers: {
+    Authorization: `Bearer ${process.env.SPEECH_API_KEY}`,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    model: 'speech',
+    input: 'Hello, welcome to our service.',
+    voice: 'en_female',
+    response_format: 'mp3',
+  }),
+});
+if (!response.ok) throw new Error(`${response.status}: ${await response.text()}`);
+await writeFile('speech.mp3', Buffer.from(await response.arrayBuffer()));
+</code></pre>
+<h3 id="request-fields">Request fields</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>input</code></td>
+<td>string</td>
+<td>Required</td>
+<td>Text to speak, 1–5,000 characters. Unicode text is supported.</td>
+</tr>
+<tr>
+<td><code>voice</code></td>
+<td>string</td>
+<td>Required</td>
+<td>A <code>voice_id</code> from <code>/v1/voices</code>. Preset IDs are recommended.</td>
+</tr>
+<tr>
+<td><code>model</code></td>
+<td>string</td>
+<td><code>speech</code></td>
+<td>Public compatibility alias. Use <code>speech</code> if your SDK requires this field.</td>
+</tr>
+<tr>
+<td><code>response_format</code></td>
+<td>string</td>
+<td><code>mp3</code></td>
+<td><code>mp3</code>, <code>wav</code>, <code>opus</code>, <code>aac</code>, or <code>pcm</code>.</td>
+</tr>
+<tr>
+<td><code>stream</code></td>
+<td>boolean</td>
+<td><code>false</code></td>
+<td>If true, the HTTP response is sent progressively.</td>
+</tr>
+<tr>
+<td><code>steady_volume</code></td>
+<td>boolean</td>
+<td><code>true</code></td>
+<td>Smooths level changes between generated segments.</td>
+</tr>
+<tr>
+<td><code>speed</code></td>
+<td>number</td>
+<td><code>1.0</code></td>
+<td>Pitch-preserving speed multiplier, 0.5–2.0. At 1.0 the decoded voice and native cadence bypass time stretching. The same multiplier applies to HTTP and WebSocket; different language presets have their own natural speaking rhythms.</td>
+</tr>
+<tr>
+<td><code>temperature</code></td>
+<td>number</td>
+<td>Server default</td>
+<td>Sampling control, 0.0–2.0.</td>
+</tr>
+<tr>
+<td><code>top_p</code></td>
+<td>number</td>
+<td>Server default</td>
+<td>Sampling control, 0.0–1.0.</td>
+</tr>
+<tr>
+<td><code>top_k</code></td>
+<td>integer</td>
+<td>Server default</td>
+<td>Sampling control, minimum −1.</td>
+</tr>
+<tr>
+<td><code>repetition_penalty</code></td>
+<td>number</td>
+<td>Server default</td>
+<td>Sampling control, 1.0–2.0.</td>
+</tr>
+<tr>
+<td><code>max_tokens</code></td>
+<td>integer</td>
+<td>Server default</td>
+<td>Generation cap, 1–4,096.</td>
+</tr>
+<tr>
+<td><code>chunk_size</code></td>
+<td>integer</td>
+<td>Server default</td>
+<td>Text segmentation size, 50–1,000 characters.</td>
+</tr>
+<tr>
+<td><code>buffer_ms</code></td>
+<td>integer</td>
+<td><code>600</code></td>
+<td>PCM packet size, 0–5,000 ms (minimum 100 ms). Both WebSocket and HTTP with <code>stream:true</code> decode progressively; larger packets can delay first audio.</td>
+</tr>
+<tr>
+<td><code>reference_audio</code></td>
+<td>base64 string</td>
+<td>Omitted</td>
+<td>Optional reference audio for HTTP voice cloning. WAV, MP3, FLAC, and OGG input can be decoded.</td>
+</tr>
+<tr>
+<td><code>reference_transcript</code></td>
+<td>string</td>
+<td>Omitted</td>
+<td>Transcript of the reference audio; can improve cloning.</td>
+</tr>
+</tbody>
+</table>
+<p>Use only the controls your application needs. Sampling and segmentation settings can affect voice consistency, latency, and pronunciation. The request body is limited to <strong>10 MB</strong> at the public proxy, including base64 reference audio.</p>
+<h3 id="audio-formats">Audio formats</h3>
+<table>
+<thead>
+<tr>
+<th><code>response_format</code></th>
+<th>Response <code>Content-Type</code></th>
+<th>Audio data</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>mp3</code></td>
+<td><code>audio/mpeg</code></td>
+<td>Encoded MP3; convenient for files and broad player support.</td>
+</tr>
+<tr>
+<td><code>wav</code></td>
+<td><code>audio/wav</code></td>
+<td>WAV; convenient for downloads.</td>
+</tr>
+<tr>
+<td><code>opus</code></td>
+<td><code>audio/ogg</code></td>
+<td>Opus in an Ogg container.</td>
+</tr>
+<tr>
+<td><code>aac</code></td>
+<td><code>audio/aac</code></td>
+<td>AAC ADTS stream.</td>
+</tr>
+<tr>
+<td><code>pcm</code></td>
+<td><code>audio/pcm</code></td>
+<td>Signed 16-bit little-endian PCM, mono, 24,000 samples/second; no WAV header.</td>
+</tr>
+</tbody>
+</table>
+<p>For the lowest-overhead progressive playback, use <code>&quot;stream&quot;:true</code> with <code>&quot;response_format&quot;:&quot;pcm&quot;</code>. The streaming HTTP response also includes <code>X-Sample-Rate: 24000</code> and <code>X-Channels: 1</code>. PCM audio carries <strong>48,000 bytes per second</strong>. If you save it to a file, use a <code>.pcm</code> extension or wrap it in a WAV header before playback.</p>
+<p>MP3, AAC, Opus and WAV streaming also encode progressively, retaining their existing codec quality settings. Format headers alone are not playable audio; clients should begin playback once audio payload is available. Avoid collecting the entire HTTP response into a Blob or calling <code>arrayBuffer()</code> before starting playback, since that waits for the full recording. Faster playback uses the same startup reserve and fixed phrase gain as WebSocket.</p>
+<pre><code class="language-bash">curl --no-buffer --fail-with-body 'https://api.tts.ganas.ai/v1/audio/speech' \
+  -H &quot;Authorization: Bearer $SPEECH_API_KEY&quot; \
+  -H 'Content-Type: application/json' \
+  --data '{&quot;model&quot;:&quot;speech&quot;,&quot;input&quot;:&quot;Hello, welcome to our service.&quot;,&quot;voice&quot;:&quot;en_female&quot;,&quot;response_format&quot;:&quot;pcm&quot;,&quot;stream&quot;:true}' \
+  --output speech.pcm
+
+# Convert raw PCM to a WAV file if needed:
+ffmpeg -f s16le -ar 24000 -ac 1 -i speech.pcm speech.wav
+</code></pre>
+<h3 id="optional-reference-voice-http-only">Optional reference voice (HTTP only)</h3>
+<p>Send <code>reference_audio</code> as a base64 string and, when available, <code>reference_transcript</code>. Keep the entire JSON body below 10 MB. WebSocket requests do not support reference audio.</p>
+<pre><code class="language-python">import base64
+import os
+import requests
+
+with open(&quot;reference.wav&quot;, &quot;rb&quot;) as audio_file:
+    reference_audio = base64.b64encode(audio_file.read()).decode(&quot;ascii&quot;)
+
+response = requests.post(
+    &quot;https://api.tts.ganas.ai/v1/audio/speech&quot;,
+    headers={&quot;Authorization&quot;: f&quot;Bearer {os.environ['SPEECH_API_KEY']}&quot;},
+    json={
+        &quot;model&quot;: &quot;speech&quot;,
+        &quot;input&quot;: &quot;Hello, this is a short sample.&quot;,
+        &quot;voice&quot;: &quot;en_female&quot;,
+        &quot;response_format&quot;: &quot;wav&quot;,
+        &quot;reference_audio&quot;: reference_audio,
+        &quot;reference_transcript&quot;: &quot;Transcript of the reference clip.&quot;,
+    },
+    timeout=120,
+)
+response.raise_for_status()
+with open(&quot;cloned-speech.wav&quot;, &quot;wb&quot;) as output:
+    output.write(response.content)
+</code></pre>
+<h2 id="websocket-streaming">WebSocket streaming</h2>
+<p>Connect to <code>wss://api.tts.ganas.ai/v1/audio/speech/ws</code>. After the connection opens, send exactly one JSON object containing <code>api_key</code>, <code>input</code>, and a <strong>preset</strong> <code>voice_id</code>. <code>model</code>, <code>steady_volume</code>, <code>chunk_size</code>, <code>buffer_ms</code>, and generation controls may also be supplied. The WebSocket always returns PCM, so <code>response_format</code> is not used to choose its output format.</p>
+<p>Audio arrives while the model is still generating the phrase. The server decodes bounded codec windows with surrounding context; network packets do not restart the voice model or split words. With <code>steady_volume=true</code>, gain is estimated from initial speech and held fixed within the phrase, with smooth peak protection. Speed changes use one continuous pitch-preserving filter per phrase. Faster speeds include a startup reserve (up to 2.4 seconds of output audio at 2x) to reduce playback gaps. Begin playing binary frames as they arrive using a small playback queue; waiting for <code>done</code> buffers the entire utterance. Model queues, shared GPU load and generation speed still affect latency.</p>
+<p>Client's first text frame:</p>
+<pre><code class="language-json">{&quot;api_key&quot;:&quot;YOUR_CLIENT_KEY&quot;,&quot;model&quot;:&quot;speech&quot;,&quot;input&quot;:&quot;नमस्ते! आप कैसे हैं?&quot;,&quot;voice&quot;:&quot;hi_female&quot;,&quot;steady_volume&quot;:true}
+</code></pre>
+<p>Server frame sequence:</p>
+<ol>
+<li>Text frame: <code>{&quot;type&quot;:&quot;start&quot;,&quot;format&quot;:&quot;pcm_s16le&quot;,&quot;sample_rate&quot;:24000,&quot;channels&quot;:1,&quot;voice&quot;:&quot;hi_female&quot;}</code>.</li>
+<li>One or more <strong>binary</strong> frames containing consecutive raw signed 16-bit little-endian PCM samples. Append them in arrival order; frame boundaries do not indicate words or sentences.</li>
+<li>Text frame: <code>{&quot;type&quot;:&quot;done&quot;}</code>, followed by normal socket closure.</li>
+</ol>
+<p>On failure, the server sends a text frame such as <code>{&quot;type&quot;:&quot;error&quot;,&quot;message&quot;:&quot;Invalid speech request&quot;}</code> and closes the socket. Authentication or request-policy errors normally close with code <code>1008</code>; server failures use <code>1011</code>. Closing the socket yourself cancels the active generation.</p>
+<p>Python example (<code>pip install websockets</code>):</p>
+<pre><code class="language-python">import asyncio
+import json
+import os
+from websockets.asyncio.client import connect
+
+async def main():
+    async with connect(&quot;wss://api.tts.ganas.ai/v1/audio/speech/ws&quot;) as socket:
+        await socket.send(json.dumps({
+            &quot;api_key&quot;: os.environ[&quot;SPEECH_API_KEY&quot;],
+            &quot;model&quot;: &quot;speech&quot;,
+            &quot;input&quot;: &quot;Hello from a WebSocket client.&quot;,
+            &quot;voice&quot;: &quot;en_female&quot;,
+            &quot;steady_volume&quot;: True,
+        }))
+        with open(&quot;speech.pcm&quot;, &quot;wb&quot;) as output:
+            async for frame in socket:
+                if isinstance(frame, bytes):
+                    output.write(frame)
+                    continue
+                event = json.loads(frame)
+                if event[&quot;type&quot;] == &quot;start&quot;:
+                    print(&quot;Audio:&quot;, event[&quot;format&quot;], event[&quot;sample_rate&quot;], &quot;Hz&quot;)
+                elif event[&quot;type&quot;] == &quot;done&quot;:
+                    break
+                elif event[&quot;type&quot;] == &quot;error&quot;:
+                    raise RuntimeError(event[&quot;message&quot;])
+
+asyncio.run(main())
+</code></pre>
+<p>For browser playback, create an <code>AudioBuffer</code> at 24 kHz and convert each 16-bit sample to a float by dividing by 32768. Queue at least 600 ms before starting, then schedule each buffer exactly at the previous buffer's end. Flush a shorter queue when <code>done</code> arrives. Network frames are transport pieces, not individual words: do not play them as separate audio elements, and send complete clauses or sentences in each synthesis request. A same-origin browser client works with this endpoint; a different website origin needs explicit cross-origin approval. Do not put a long-lived client key in public JavaScript.</p>
+<h2 id="errors-and-retries">Errors and retries</h2>
+<p>HTTP failures return JSON with a <code>detail</code> field. Validation failures may contain an array of field errors rather than a single string.</p>
+<table>
+<thead>
+<tr>
+<th>HTTP status</th>
+<th>Meaning</th>
+<th>Client action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>401</code></td>
+<td>Missing, invalid, expired, or revoked client key</td>
+<td>Check the key; request a replacement if needed.</td>
+</tr>
+<tr>
+<td><code>403</code></td>
+<td>Source IP is not permitted</td>
+<td>Use an approved IP or request an IP-rule change.</td>
+</tr>
+<tr>
+<td><code>413</code></td>
+<td>Request body exceeds the public proxy limit</td>
+<td>Shorten the text or reference audio.</td>
+</tr>
+<tr>
+<td><code>422</code></td>
+<td>Request JSON failed validation</td>
+<td>Correct required fields or parameter ranges.</td>
+</tr>
+<tr>
+<td><code>429</code></td>
+<td>Rate limit reached, waiting queue full, or queue wait timed out</td>
+<td>Retry with exponential backoff and jitter.</td>
+</tr>
+<tr>
+<td><code>5xx</code></td>
+<td>Temporary service or generation failure</td>
+<td>Retry with backoff; report persistent failures.</td>
+</tr>
+</tbody>
+</table>
+<p>Speech requests can take longer when the text is long or other requests are active. Set client read timeouts accordingly. Do not assume fixed audio-chunk sizes or a fixed first-audio latency. Optional expressive tags such as <code>&lt;happy&gt;</code>, <code>&lt;sad&gt;</code>, <code>&lt;laugh&gt;</code>, <code>&lt;giggle&gt;</code>, and <code>&lt;whispering&gt;</code> can be included in text, but their effect varies by voice and language.</p>
+</article>
+  </div>
+</body>
+</html>

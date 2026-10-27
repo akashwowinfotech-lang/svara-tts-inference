@@ -1,0 +1,23 @@
+{
+  "source": "/home/wowbharat/Downloads/speech(1).wav",
+  "seconds": 34.90133333333333,
+  "comparison_split_seconds": 20.3,
+  "split_note": "Diagnostic split inside a measured pause; original model phrase boundaries are not available.",
+  "sections": [
+    {
+      "before_dbfs": -31.130458644681358,
+      "after_dbfs": -18.41639241579703,
+      "waveform_correlation": 0.9999999975829625,
+      "peak_dbfs": -0.8963794254962342
+    },
+    {
+      "before_dbfs": -18.928065121207563,
+      "after_dbfs": -18.41637491080285,
+      "waveform_correlation": 0.9999999967937987,
+      "peak_dbfs": -4.75452292394529
+    }
+  ],
+  "volume_difference_before_db": 12.202393523473795,
+  "volume_difference_after_db": 1.7504994179518008e-05,
+  "clipped_samples": 0
+}

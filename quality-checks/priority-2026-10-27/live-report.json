@@ -1,0 +1,40 @@
+{
+  "priority_edit_and_validation": "passed",
+  "queue_by_priority": {
+    "high": 1,
+    "normal": 1,
+    "low": 1
+  },
+  "queued_disconnect_cleanup": "passed",
+  "completed": [
+    {
+      "label": "Low",
+      "bytes": 86016
+    },
+    {
+      "label": "Normal",
+      "bytes": 94208
+    },
+    {
+      "label": "High",
+      "bytes": 77824
+    }
+  ],
+  "admissions": [
+    {
+      "label": "High",
+      "time_s": 2.915062858024612
+    },
+    {
+      "label": "Normal",
+      "time_s": 4.61146030202508
+    },
+    {
+      "label": "Low",
+      "time_s": 7.387906271032989
+    }
+  ],
+  "priority_order": "passed",
+  "final_active": 0,
+  "final_queued": 0
+}

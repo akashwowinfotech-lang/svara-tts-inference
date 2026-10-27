@@ -13,6 +13,8 @@ build/
 # Virtual environments
 venv/
 .venv/
+.secrets/
+.data/
 ENV/
 env/
 examples/*
@@ -53,5 +55,5 @@ Dockerfile
 docker-compose.yml
 .dockerignore
 
-# HTML test files (not needed in API container)
-*.html
+# The browser playground is served by the API container.
+!playground.html

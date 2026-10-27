@@ -1,0 +1,41 @@
+{
+  "checks": {
+    "before": {
+      "label": "before",
+      "first_audio_seconds": 24.064622182999983,
+      "total_seconds": 24.113118680000014,
+      "audio_seconds": 30.805333333333333
+    },
+    "after": {
+      "label": "after",
+      "voice": "mr_female",
+      "speed": 1.0,
+      "first_audio_seconds": 1.445322446000091,
+      "total_seconds": 15.780339862000005,
+      "audio_seconds": 29.696,
+      "playback_underruns": []
+    },
+    "after-tls": {
+      "label": "after-tls",
+      "voice": "hi_male",
+      "speed": 1.0,
+      "first_audio_seconds": 1.3574310390001756,
+      "total_seconds": 5.485171224000169,
+      "audio_seconds": 11.008,
+      "playback_underruns": []
+    },
+    "after-speed2-buffered": {
+      "label": "after-speed2-buffered",
+      "voice": "mr_female",
+      "speed": 2.0,
+      "first_audio_seconds": 3.635291974999973,
+      "total_seconds": 16.185529597999903,
+      "audio_seconds": 14.848,
+      "playback_underruns": []
+    }
+  },
+  "regression_tests_passed": 38,
+  "deployment": "speech-api.service active and public health healthy",
+  "scope": "WebSocket progressive decoding, same native prompt and generation per phrase; HTTP behavior unchanged",
+  "tls_test": "Public hostname/certificate on local production Nginx listener; owner test key stays loopback restricted"
+}

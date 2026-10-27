@@ -57,7 +57,7 @@ class VLLMEmbeddedTransport:
         )
 
         cls._engine = AsyncLLMEngine.from_engine_args(engine_args)
-        logger.info(f"vLLM engine initialized: model={model}, dtype={dtype}, "
+        logger.info(f"vLLM engine initialized: dtype={dtype}, "
                      f"quantization={quantization}, max_model_len={max_model_len}")
 
     def __init__(self, model: str):
@@ -86,6 +86,7 @@ class VLLMEmbeddedTransport:
 
         request_id = str(uuid.uuid4())
         prev_text = ""
+        completed = False
 
         try:
             async for request_output in self.engine.generate(
@@ -96,12 +97,12 @@ class VLLMEmbeddedTransport:
                 prev_text = current_text
                 if delta:
                     yield delta
-        except asyncio.CancelledError:
-            await self.engine.abort(request_id)
-            raise
-        except Exception:
-            await self.engine.abort(request_id)
-            raise
+            completed = True
+        finally:
+            # Also handles closing a progressive audio consumer between
+            # chunks, when the generator receives GeneratorExit.
+            if not completed:
+                await self.engine.abort(request_id)
 
     def stream(self, prompt: str, **gen_kwargs) -> Iterator[str]:
         """Sync wrapper around astream() for the sync orchestrator path."""

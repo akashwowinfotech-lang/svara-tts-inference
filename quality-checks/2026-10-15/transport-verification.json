@@ -1,0 +1,11 @@
+{
+  "websocket_seconds": [
+    4.24325,
+    2.8350833333333334
+  ],
+  "http_wav": {
+    "sample_rate": "24000",
+    "channels": 1,
+    "duration": "4.725208"
+  }
+}

@@ -1,0 +1,38 @@
+[
+  {
+    "frames": 20,
+    "decode_seconds": 0.1482966450000731,
+    "emitted_seconds": 1.024,
+    "calibration_seconds": 1.7066666666666668,
+    "correlation": 0.9996413236906732,
+    "gain": 0.9300552579852521,
+    "gain_change_db": 0.06424809260617373
+  },
+  {
+    "frames": 24,
+    "decode_seconds": 0.2098221509997984,
+    "emitted_seconds": 1.3653333333333333,
+    "calibration_seconds": 2.048,
+    "correlation": 0.9997254609709338,
+    "gain": 0.9232183018336231,
+    "gain_change_db": 0.0001611523011358291
+  },
+  {
+    "frames": 28,
+    "decode_seconds": 0.28553364699996564,
+    "emitted_seconds": 1.7066666666666668,
+    "calibration_seconds": 2.048,
+    "correlation": 0.9997236455969737,
+    "gain": 0.9237788031070611,
+    "gain_change_db": 0.005432901065120101
+  },
+  {
+    "frames": 32,
+    "decode_seconds": 0.3058675069999026,
+    "emitted_seconds": 2.048,
+    "calibration_seconds": 2.048,
+    "correlation": 0.9996803607318909,
+    "gain": 0.9237160368771596,
+    "gain_change_db": 0.004842717499425792
+  }
+]

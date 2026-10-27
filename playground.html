@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Speech playground</title>
+  <style>
+    :root { font: 16px/1.5 system-ui, sans-serif; color: #eaf0f7; background: #0c1321; }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 2rem 1rem; }
+    main { max-width: 850px; margin: auto; }
+    h1 { margin: 0 0 .3rem; font-size: 2rem; }
+    p { color: #aebbd0; }
+    .panel { background: #172338; border: 1px solid #30415a; border-radius: 16px; padding: 1.5rem; margin-top: 1.5rem; }
+    label { display: block; font-weight: 650; margin: 1rem 0 .4rem; }
+    textarea, select, input[type=password], input[type=number] { width: 100%; background: #0e1828; color: #fff; border: 1px solid #435672; border-radius: 8px; padding: .75rem; font: inherit; }
+    textarea { min-height: 145px; resize: vertical; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .buttons { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: 1rem; }
+    button { background: #6ce1bb; color: #09251d; border: 0; border-radius: 8px; padding: .75rem 1rem; font: inherit; font-weight: 700; cursor: pointer; }
+    button.secondary { background: #30415a; color: #eef4fc; }
+    button:disabled { opacity: .5; cursor: default; }
+    .tags button { padding: .4rem .65rem; font-size: .9rem; }
+    .check { display: inline-flex; align-items: center; gap: .5rem; margin-top: 1rem; }
+    .check input { width: auto; }
+    #status { min-height: 1.5rem; color: #b8ecd8; }
+    a { color: #83e4c7; }
+    @media(max-width: 600px) { .row { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Speech playground</h1>
+  <p>Test all available voices. A phrase is prepared before playback starts so the opening and pacing stay consistent.</p>
+  <section class="panel">
+    <label for="apiKey">API key</label>
+    <div class="row"><input id="apiKey" type="password" autocomplete="off" placeholder="Paste your client key"><button id="loadVoices" type="button">Load voices</button></div>
+    <p>Keys stay in this tab. Remote users should use the HTTPS domain.</p>
+    <div class="row">
+      <div><label for="voice">Voice</label><select id="voice"><option value="hi_female">Hindi (Female)</option></select></div>
+      <div><label for="transport">Streaming transport</label><select id="transport"><option value="ws">WebSocket</option><option value="http">HTTP stream</option></select></div>
+    </div>
+    <label for="speed">Speaking speed (1.0 = original voice)</label>
+    <input id="speed" type="number" min="0.5" max="2" step="0.05" value="1.0">
+    <label for="script">Text</label>
+    <textarea id="script">नमस्ते! आज आप कैसे हैं?</textarea>
+    <p>Try an expressive tag at the end of a sentence. Results vary by language and voice.</p>
+    <label class="check"><input id="steadyVolume" type="checkbox" checked> Stable volume</label>
+    <div class="buttons tags" id="tags">
+      <button class="secondary" data-tag="<happy>" type="button">Happy</button>
+      <button class="secondary" data-tag="<sad>" type="button">Sad</button>
+      <button class="secondary" data-tag="<laugh>" type="button">Laugh</button>
+      <button class="secondary" data-tag="<giggle>" type="button">Giggle</button>
+      <button class="secondary" data-tag="<whispering>" type="button">Whisper</button>
+    </div>
+    <div class="buttons">
+      <button id="speak" type="button">Speak</button>
+      <button id="stop" class="secondary" type="button" disabled>Stop</button>
+      <a id="download" hidden download="speech.wav">Download WAV</a>
+    </div>
+    <p id="status" role="status" aria-live="polite">Enter a client key to load voices.</p>
+  </section>
+  <p>HTTP endpoint: <code>POST /v1/audio/speech</code>. WebSocket endpoint: <code>/v1/audio/speech/ws</code>. Both send 24 kHz mono audio; WebSocket chunks are signed 16-bit PCM. <a href="/integration">Developer integration guide</a>.</p>
+</main>
+<script>
+  const $ = id => document.getElementById(id);
+  const languageNames = { en: 'English', hi: 'Hindi', mr: 'Marathi', gu: 'Gujarati', kn: 'Kannada', te: 'Telugu' };
+  const samples = {
+    en: 'Hello! How are you today?', hi: 'नमस्ते! आज आप कैसे हैं?',
+    mr: 'नमस्कार! आज तुम्ही कसे आहात?', gu: 'નમસ્તે! આજે તમે કેમ છો?',
+    kn: 'ನಮಸ್ಕಾರ! ಇಂದು ನೀವು ಹೇಗಿದ್ದೀರಿ?', te: 'నమస్కారం! ఈ రోజు మీరు ఎలా ఉన్నారు?'
+  };
+  let socket, controller, context, sources = [], chunks = [], nextStart = 0, active = false, downloadUrl, pendingByte = null;
+  let playbackQueue = [], queuedSeconds = 0, playbackStarted = false;
+  const status = message => { $('status').textContent = message; };
+
+  async function loadVoices() {
+    const key = $('apiKey').value.trim();
+    if (!key) { status('Enter a client key first.'); return; }
+    try {
+      const response = await fetch('/v1/voices', { headers: { Authorization: `Bearer ${key}` } });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const { voices } = await response.json();
+      const selected = $('voice').value;
+      const matching = voices;
+      if (!matching.length) throw new Error('No matching voices returned');
+      $('voice').replaceChildren(...matching.map(v => {
+        const option = document.createElement('option');
+        option.value = v.voice_id;
+        option.textContent = v.name;
+        return option;
+      }));
+      $('voice').value = matching.some(v => v.voice_id === selected) ? selected : matching[0].voice_id;
+      status(`Ready: ${matching.length} voices available.`);
+    } catch (error) { status(`Cannot load voices: ${error.message}`); }
+  }
+
+  function setActive(value) {
+    active = value;
+    $('speak').disabled = value;
+    $('stop').disabled = !value;
+  }
+
+  function stopPlayback() {
+    socket?.close(); socket = null;
+    controller?.abort(); controller = null;
+    for (const source of sources) { try { source.stop(); } catch (_) {} }
+    sources = []; nextStart = 0;
+    playbackQueue = []; queuedSeconds = 0; playbackStarted = false;
+    setActive(false);
+  }
+
+  function addPcm(bytes) {
+    chunks.push(bytes);
+    if (pendingByte !== null) {
+      const combined = new Uint8Array(bytes.byteLength + 1);
+      combined[0] = pendingByte;
+      combined.set(bytes, 1);
+      bytes = combined;
+      pendingByte = null;
+    }
+    if (bytes.byteLength % 2) pendingByte = bytes[bytes.byteLength - 1];
+    const usable = bytes.byteLength - (bytes.byteLength % 2);
+    if (!usable) return;
+    const samples16 = new DataView(bytes.buffer, bytes.byteOffset, usable);
+    const buffer = context.createBuffer(1, usable / 2, 24000);
+    const channel = buffer.getChannelData(0);
+    for (let i = 0; i < channel.length; i++) channel[i] = samples16.getInt16(i * 2, true) / 32768;
+    playbackQueue.push(buffer);queuedSeconds += buffer.duration;
+    if (playbackStarted || queuedSeconds >= 0.6) drainPlayback();
+  }
+
+  function drainPlayback() {
+    if (!playbackQueue.length) return;
+    if (!playbackStarted) { nextStart=context.currentTime+0.12;playbackStarted=true; }
+    for (const buffer of playbackQueue) scheduleBuffer(buffer);
+    playbackQueue=[];queuedSeconds=0;
+  }
+
+  function scheduleBuffer(buffer) {
+    const source = context.createBufferSource();
+    source.buffer = buffer;
+    source.connect(context.destination);
+    const when = nextStart>context.currentTime ? nextStart : context.currentTime+0.12;
+    source.start(when);
+    nextStart = when + buffer.duration;
+    sources.push(source);
+    source.onended = () => { sources = sources.filter(s => s !== source); };
+  }
+
+  function makeWav(parts) {
+    const length = parts.reduce((sum, p) => sum + p.byteLength, 0);
+    const wav = new ArrayBuffer(44 + length);
+    const view = new DataView(wav);
+    const write = (at, text) => { for (let i = 0; i < text.length; i++) view.setUint8(at + i, text.charCodeAt(i)); };
+    write(0, 'RIFF'); view.setUint32(4, 36 + length, true); write(8, 'WAVE');
+    write(12, 'fmt '); view.setUint32(16, 16, true); view.setUint16(20, 1, true);
+    view.setUint16(22, 1, true); view.setUint32(24, 24000, true);
+    view.setUint32(28, 48000, true); view.setUint16(32, 2, true); view.setUint16(34, 16, true);
+    write(36, 'data'); view.setUint32(40, length, true);
+    let offset = 44;
+    for (const part of parts) { new Uint8Array(wav, offset).set(part); offset += part.byteLength; }
+    return new Blob([wav], { type: 'audio/wav' });
+  }
+
+  function finish() {
+    drainPlayback();
+    setActive(false);
+    if (chunks.length) {
+      if (downloadUrl) URL.revokeObjectURL(downloadUrl);
+      downloadUrl = URL.createObjectURL(makeWav(chunks));
+      $('download').href = downloadUrl;
+      $('download').hidden = false;
+      status('Finished. You can download the WAV file.');
+    } else status('No audio was returned. Check the server logs.');
+  }
+
+  async function speak() {
+    const apiKey = $('apiKey').value.trim();
+    if (!apiKey) { status('Enter a client key first.'); return; }
+    const input = $('script').value.trim();
+    if (!input) { status('Enter text first.'); return; }
+    if (input.length > 5000) { status('Limit text to 5,000 characters.'); return; }
+    const speed=Number($('speed').value);
+    if (!Number.isFinite(speed) || speed<0.5 || speed>2) { status('Choose a speed from 0.5 to 2.0.');return; }
+    stopPlayback();
+    chunks = [];
+    pendingByte = null;
+    $('download').hidden = true;
+    context ??= new AudioContext();
+    await context.resume();
+    setActive(true);
+    status('Connecting…');
+    const request = { model: 'speech', input, voice: $('voice').value, speed, response_format: 'pcm', stream: true, steady_volume: $('steadyVolume').checked };
+    if ($('transport').value === 'ws') {
+      const scheme = location.protocol === 'https:' ? 'wss:' : 'ws:';
+      socket = new WebSocket(`${scheme}//${location.host}/v1/audio/speech/ws`);
+      socket.binaryType = 'arraybuffer';
+      socket.onopen = () => socket.send(JSON.stringify({ ...request, api_key: apiKey }));
+      socket.onmessage = event => {
+        if (typeof event.data === 'string') {
+          const message = JSON.parse(event.data);
+          if (message.type === 'start') status('Receiving audio…');
+          if (message.type === 'done') { socket = null; finish(); }
+          if (message.type === 'error') { status(message.message); stopPlayback(); }
+        } else addPcm(new Uint8Array(event.data));
+      };
+      socket.onerror = () => { status('WebSocket connection failed.'); stopPlayback(); };
+      socket.onclose = () => { if (active) { status('Connection closed before audio finished.'); setActive(false); } };
+    } else {
+      controller = new AbortController();
+      try {
+        const response = await fetch('/v1/audio/speech', {
+          method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+          body: JSON.stringify(request), signal: controller.signal,
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+        status('Receiving audio…');
+        const reader = response.body.getReader();
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          addPcm(value);
+        }
+        controller = null;
+        finish();
+      } catch (error) {
+        if (error.name !== 'AbortError') status(error.message);
+        setActive(false);
+      }
+    }
+  }
+
+  $('speak').addEventListener('click', speak);
+  $('stop').addEventListener('click', () => { stopPlayback(); status('Stopped.'); });
+  $('voice').addEventListener('change', () => {
+    const language = $('voice').value.split('_')[0];
+    if (samples[language]) $('script').value = samples[language];
+  });
+  $('tags').addEventListener('click', event => {
+    const tag = event.target.dataset.tag;
+    if (tag) { $('script').value = `${$('script').value.trim()} ${tag}`; $('script').focus(); }
+  });
+  $('loadVoices').addEventListener('click', loadVoices);
+</script>
+</body>
+</html>

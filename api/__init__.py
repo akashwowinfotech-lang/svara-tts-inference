@@ -1,2 +1,1 @@
-"""FastAPI server for Svara TTS API."""
-
+"""FastAPI server for the speech API."""

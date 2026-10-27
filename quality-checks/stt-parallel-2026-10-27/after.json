@@ -1,0 +1,292 @@
+{
+  "reference_comparison": [
+    {
+      "language": "en",
+      "status": 200,
+      "seconds": 0.5896,
+      "body": {
+        "text": "<en-in> Hello welcome to Ganas Please tell me how I can help you today",
+        "duration_seconds": 0.458,
+        "audio_seconds": 5.035,
+        "truncated": false,
+        "avg_logprob": -0.0783,
+        "is_low_confidence": false,
+        "is_likely_hallucination": false,
+        "is_disallowed_script": false
+      }
+    },
+    {
+      "language": "mr",
+      "status": 200,
+      "seconds": 1.0406,
+      "body": {
+        "text": "नमस्कार आमच्या सेवेमध्ये तुमचे स्वागत आहे आज आम्ही तुम्हाला मदत करण्यासाठी तयार आहोत कृपया",
+        "duration_seconds": 0.916,
+        "audio_seconds": 8.0,
+        "truncated": false,
+        "avg_logprob": -0.1144,
+        "is_low_confidence": false,
+        "is_likely_hallucination": false,
+        "is_disallowed_script": false
+      }
+    },
+    {
+      "language": "kn",
+      "status": 200,
+      "seconds": 1.0404,
+      "body": {
+        "text": "ನಮಸ್ಕಾರ ನಮ್ಮ ಸೇವೆಗೆ ಸ್ವಾಗತ ನಿಮಗೆ ಸಹಾಯ ಮಾಡಲು ನಾವು ಸಿದ್ಧರಾಗಿದ್ದೇವೆ",
+        "duration_seconds": 0.921,
+        "audio_seconds": 6.391,
+        "truncated": false,
+        "avg_logprob": -0.0193,
+        "is_low_confidence": false,
+        "is_likely_hallucination": false,
+        "is_disallowed_script": false
+      }
+    },
+    {
+      "language": "te",
+      "status": 200,
+      "seconds": 0.5771,
+      "body": {
+        "text": "నమస్కారం మా సేవకు స్వాగతం మీకు సహాయం చేయడానికి మేము సిద్ధంగా ఉన్నాము",
+        "duration_seconds": 0.47,
+        "audio_seconds": 6.377,
+        "truncated": false,
+        "avg_logprob": -0.0105,
+        "is_low_confidence": false,
+        "is_likely_hallucination": false,
+        "is_disallowed_script": false
+      }
+    }
+  ],
+  "exact_reference_matches": [
+    true,
+    true,
+    true,
+    true
+  ],
+  "loads": [
+    [
+      {
+        "language": "en",
+        "status": 200,
+        "seconds": 0.4153,
+        "body": {
+          "text": "<en-in> Hello welcome to Ganas Please tell me how I can help you today",
+          "duration_seconds": 0.372,
+          "audio_seconds": 5.035,
+          "truncated": false,
+          "avg_logprob": -0.0768,
+          "is_low_confidence": false,
+          "is_likely_hallucination": false,
+          "is_disallowed_script": false
+        }
+      }
+    ],
+    [
+      {
+        "language": "en",
+        "status": 200,
+        "seconds": 0.4984,
+        "body": {
+          "text": "<en-in> Hello welcome to Ganas Please tell me how I can help you today",
+          "duration_seconds": 0.441,
+          "audio_seconds": 5.035,
+          "truncated": false,
+          "avg_logprob": -0.0783,
+          "is_low_confidence": false,
+          "is_likely_hallucination": false,
+          "is_disallowed_script": false
+        }
+      },
+      {
+        "language": "en",
+        "status": 200,
+        "seconds": 0.4968,
+        "body": {
+          "text": "<en-in> Hello welcome to Ganas Please tell me how I can help you today",
+          "duration_seconds": 0.439,
+          "audio_seconds": 5.035,
+          "truncated": false,
+          "avg_logprob": -0.0783,
+          "is_low_confidence": false,
+          "is_likely_hallucination": false,
+          "is_disallowed_script": false
+        }
+      }
+    ],
+    [
+      {
+        "language": "en",
+        "status": 200,
+        "seconds": 0.5176,
+        "body": {
+          "text": "<en-in> Hello welcome to Ganas Please tell me how I can help you today",
+          "duration_seconds": 0.431,
+          "audio_seconds": 5.035,
+          "truncated": false,
+          "avg_logprob": -0.0783,
+          "is_low_confidence": false,
+          "is_likely_hallucination": false,
+          "is_disallowed_script": false
+        }
+      },
+      {
+        "language": "en",
+        "status": 200,
+        "seconds": 0.9688,
+        "body": {
+          "text": "<en-in> Hello welcome to Ganas Please tell me how I can help you today",
+          "duration_seconds": 0.883,
+          "audio_seconds": 5.035,
+          "truncated": false,
+          "avg_logprob": -0.0783,
+          "is_low_confidence": false,
+          "is_likely_hallucination": false,
+          "is_disallowed_script": false
+        }
+      },
+      {
+        "language": "en",
+        "status": 200,
+        "seconds": 0.5168,
+        "body": {
+          "text": "<en-in> Hello welcome to Ganas Please tell me how I can help you today",
+          "duration_seconds": 0.431,
+          "audio_seconds": 5.035,
+          "truncated": false,
+          "avg_logprob": -0.0783,
+          "is_low_confidence": false,
+          "is_likely_hallucination": false,
+          "is_disallowed_script": false
+        }
+      },
+      {
+        "language": "en",
+        "status": 200,
+        "seconds": 0.9687,
+        "body": {
+          "text": "<en-in> Hello welcome to Ganas Please tell me how I can help you today",
+          "duration_seconds": 0.884,
+          "audio_seconds": 5.035,
+          "truncated": false,
+          "avg_logprob": -0.0783,
+          "is_low_confidence": false,
+          "is_likely_hallucination": false,
+          "is_disallowed_script": false
+        }
+      }
+    ],
+    [
+      {
+        "language": "en",
+        "status": 200,
+        "seconds": 0.529,
+        "body": {
+          "text": "<en-in> Hello welcome to Ganas Please tell me how I can help you today",
+          "duration_seconds": 0.443,
+          "audio_seconds": 5.035,
+          "truncated": false,
+          "avg_logprob": -0.0783,
+          "is_low_confidence": false,
+          "is_likely_hallucination": false,
+          "is_disallowed_script": false
+        }
+      },
+      {
+        "language": "en",
+        "status": 200,
+        "seconds": 0.5301,
+        "body": {
+          "text": "<en-in> Hello welcome to Ganas Please tell me how I can help you today",
+          "duration_seconds": 0.442,
+          "audio_seconds": 5.035,
+          "truncated": false,
+          "avg_logprob": -0.0783,
+          "is_low_confidence": false,
+          "is_likely_hallucination": false,
+          "is_disallowed_script": false
+        }
+      },
+      {
+        "language": "en",
+        "status": 200,
+        "seconds": 0.963,
+        "body": {
+          "text": "<en-in> Hello welcome to Ganas Please tell me how I can help you today",
+          "duration_seconds": 0.871,
+          "audio_seconds": 5.035,
+          "truncated": false,
+          "avg_logprob": -0.0783,
+          "is_low_confidence": false,
+          "is_likely_hallucination": false,
+          "is_disallowed_script": false
+        }
+      },
+      {
+        "language": "en",
+        "status": 200,
+        "seconds": 1.4078,
+        "body": {
+          "text": "<en-in> Hello welcome to Ganas Please tell me how I can help you today",
+          "duration_seconds": 1.295,
+          "audio_seconds": 5.035,
+          "truncated": false,
+          "avg_logprob": -0.0783,
+          "is_low_confidence": false,
+          "is_likely_hallucination": false,
+          "is_disallowed_script": false
+        }
+      },
+      {
+        "language": "en",
+        "status": 200,
+        "seconds": 0.9628,
+        "body": {
+          "text": "<en-in> Hello welcome to Ganas Please tell me how I can help you today",
+          "duration_seconds": 0.868,
+          "audio_seconds": 5.035,
+          "truncated": false,
+          "avg_logprob": -0.0783,
+          "is_low_confidence": false,
+          "is_likely_hallucination": false,
+          "is_disallowed_script": false
+        }
+      },
+      {
+        "language": "en",
+        "status": 200,
+        "seconds": 1.4072,
+        "body": {
+          "text": "<en-in> Hello welcome to Ganas Please tell me how I can help you today",
+          "duration_seconds": 1.292,
+          "audio_seconds": 5.035,
+          "truncated": false,
+          "avg_logprob": -0.0783,
+          "is_low_confidence": false,
+          "is_likely_hallucination": false,
+          "is_disallowed_script": false
+        }
+      }
+    ]
+  ],
+  "ready": {
+    "status": "ready",
+    "device": "cuda",
+    "supported_languages": [
+      "en",
+      "hi",
+      "kn",
+      "mr",
+      "te"
+    ],
+    "max_concurrent_inference": 2,
+    "inference_batch_size": 2,
+    "batch_memory_fallbacks": 0,
+    "completed_batch_passes": 8,
+    "batched_utterances": 16,
+    "max_pending": 8
+  }
+}
