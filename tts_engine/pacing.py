@@ -49,32 +49,102 @@ def speech_units(text: str) -> int:
     return total
 
 
-def phrase_chunks(text: str, max_chars: int = 200, max_units: int = 60) -> list[str]:
-    """Keep complete sentences where possible, with bounded synthesis context."""
-    sentences = re.split(r'(?<=[.!?।॥])\s+|\n+', text.strip())
+_CLAUSE_END = tuple(',;:\u060c\u061b\u2014\u2013\u2026')
+
+
+def _split_sentence(sentence: str, max_chars: int, max_units: int) -> list[str]:
+    """Cut one over-long sentence into balanced pieces at natural pauses.
+
+    Every cut starts a new, independently sampled generation, and the model
+    re-draws the voice each time. Cuts are therefore as few as the limits
+    allow, they fall after a comma or similar pause where a speaker would
+    pause anyway, and the pieces are even so none is a tiny leftover that
+    would be spoken in an unstable voice.
+    """
+    words = sentence.split()
+    count = len(words)
+    units = [speech_units(word) for word in words]
+    total_units = sum(units)
+    total_chars = len(sentence)
+    if count < 2 or (total_chars <= max_chars and total_units <= max_units):
+        return [sentence]
+    prefix_units = [0]
+    prefix_chars = [-1]
+    for word, unit in zip(words, units):
+        prefix_units.append(prefix_units[-1] + unit)
+        prefix_chars.append(prefix_chars[-1] + len(word) + 1)
+
+    def fits(i: int, j: int) -> bool:
+        return (prefix_units[j] - prefix_units[i] <= max_units and
+                prefix_chars[j] - prefix_chars[i] <= max_chars)
+
+    minimum = max(-(-total_units // max_units), -(-total_chars // max_chars), 2)
+    best: tuple[float, list[int]] | None = None
+    for pieces in (minimum, minimum + 1):
+        ideal = total_units / pieces
+        inf = float('inf')
+        cost = [[inf] * (count + 1) for _ in range(pieces + 1)]
+        back = [[0] * (count + 1) for _ in range(pieces + 1)]
+        cost[0][0] = 0.
+        for piece in range(1, pieces + 1):
+            for j in range(piece, count + 1):
+                for i in range(piece - 1, j):
+                    if cost[piece - 1][i] == inf or not fits(i, j):
+                        continue
+                    size = (prefix_units[j] - prefix_units[i] - ideal) / ideal
+                    # A cut that is not after a pause costs about as much as
+                    # a piece that is half again too long or too short.
+                    cut = 0. if j == count or words[j - 1].endswith(_CLAUSE_END) else .3
+                    value = cost[piece - 1][i] + size * size + cut
+                    if value < cost[piece][j]:
+                        cost[piece][j], back[piece][j] = value, i
+        if cost[pieces][count] < inf and (best is None or cost[pieces][count] < best[0]):
+            cuts, j = [], count
+            for piece in range(pieces, 0, -1):
+                cuts.append(j)
+                j = back[piece][j]
+            best = (cost[pieces][count], sorted(cuts))
+    if best is None:  # a single word is over the limit; fall back to greedy
+        parts, current = [], ''
+        for word in words:
+            candidate = f'{current} {word}'.strip()
+            if current and (len(candidate) > max_chars or speech_units(candidate) > max_units):
+                parts.append(current)
+                current = word
+            else:
+                current = candidate
+        return parts + ([current] if current else [])
+    parts, start = [], 0
+    for end in best[1]:
+        parts.append(' '.join(words[start:end]))
+        start = end
+    return parts
+
+
+def phrase_chunks(text: str, max_chars: int = 200, max_units: int = 60,
+                  sentence_chars: int | None = None,
+                  sentence_units: int | None = None) -> list[str]:
+    """Group text into phrases, one model generation each.
+
+    The model draws a slightly different voice for every generation, so a
+    seam between two phrases can sound like a different speaker. Short
+    sentences are grouped up to `max_chars`/`max_units`. A single sentence
+    is never cut while it fits `sentence_chars`/`sentence_units` (default:
+    the same limits); only longer ones are cut, at pauses, into even pieces.
+    """
+    sentence_chars = max(sentence_chars or 0, max_chars)
+    sentence_units = max(sentence_units or 0, max_units)
+    sentences = re.split(r'(?<=[.!?\u0964\u0965])\s+|\n+', text.strip())
     phrases: list[str] = []
     for sentence in sentences:
         tags = re.match(r'^((?:<[^<>]+>\s*)+)(.*)$', sentence)
         if tags and phrases:
             phrases[-1] += ' ' + tags.group(1).strip()
             sentence = tags.group(2)
-        current = ''
-        for word in sentence.split():
-            candidate = f'{current} {word}'.strip()
-            if current and (len(candidate) > max_chars or speech_units(candidate) > max_units):
-                phrases.append(current)
-                current = word
-            else:
-                current = candidate
-        if current:
-            if (phrases and speech_units(phrases[-1]) < 12 and
-                    len(phrases[-1]) + len(current) < max_chars and
-                    speech_units(phrases[-1] + ' ' + current) <= max_units):
-                phrases[-1] += ' ' + current
-            else:
-                phrases.append(current)
+        pieces = _split_sentence(' '.join(sentence.split()), sentence_chars, sentence_units)
+        phrases.extend(piece for piece in pieces if piece)
     merged: list[str] = []
-    for phrase in phrases:
+    for index, phrase in enumerate(phrases):
         joined = f'{merged[-1]} {phrase}' if merged else phrase
         if merged and len(joined) <= max_chars and speech_units(joined) <= max_units:
             merged[-1] = joined

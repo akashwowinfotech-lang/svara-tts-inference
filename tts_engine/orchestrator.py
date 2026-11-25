@@ -16,6 +16,7 @@ from .encoder import svara_text_to_tokens
 from .utils import create_speaker_id
 from .buffers import AudioBuffer, SyncFuture, crossfade_pcm
 from .utils import chunk_text
+from .voice_match import VoiceMatcher, CHECK_FRAMES, REFERENCE_SECONDS
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +24,14 @@ logger = logging.getLogger(__name__)
 # Other presets retain their previous defaults after Hindi male looped in
 # the expanded-paragraph check. Explicit larger-chunk options remain usable.
 PARAGRAPH_SPEAKERS = frozenset({'Marathi (Female)'})
+
+# The model draws a slightly different voice for every generation, so a cut
+# inside a sentence is heard as a second speaker. A single sentence is kept in
+# one generation up to these limits (about 30 seconds of speech); only longer
+# sentences are cut, at pauses and into even pieces. Limits are checked for
+# every preset in quality-checks/2026-11-25-voice-continuity.
+WHOLE_SENTENCE_UNITS = 125
+WHOLE_SENTENCE_CHARS = 700
 
 
 def _detect_max_workers(snac_device: Optional[str] = None) -> int:
@@ -279,14 +288,32 @@ class SvaraTTSOrchestrator:
                          if approved_paragraph else self.max_chunk_chars)
         chars = chunk_size or default_chars
         unit_limit = 60
+        sentence_chars = sentence_units = None
+        if native_preset and chunk_size is None:
+            context = int(os.getenv('VLLM_MAX_MODEL_LEN', '4096'))
+            sentence_chars = WHOLE_SENTENCE_CHARS
+            sentence_units = min(WHOLE_SENTENCE_UNITS, max(60, (context - 512) // 22))
         if native_preset and chars > 200:
             # Keep fitting paragraphs in one native generation for every
             # preset. Leave room for text and special tokens as well.
             context = int(os.getenv('VLLM_MAX_MODEL_LEN', '4096'))
             unit_limit = min(160, max(60, (context - 512) // 22))
-        phrases = phrase_chunks(text, max_chars=chars, max_units=unit_limit)
+        phrases = phrase_chunks(text, max_chars=chars, max_units=unit_limit,
+                                sentence_chars=sentence_chars, sentence_units=sentence_units)
         if not phrases:
             return
+
+        # Phrases are separate generations and now and then one comes out in
+        # a clearly different voice. Later phrases are therefore compared with
+        # the opening one after about 3 s and, if they differ, generated again
+        # before any of their audio is sent. Set VOICE_MATCH_RETRIES=0 to disable.
+        retries = int(os.getenv('VOICE_MATCH_RETRIES', '2'))
+        # Not used for the long-generation voice: its model draws one of two
+        # voice registers per generation and retries rarely land in the right
+        # one, so the check cost 9-23% more time there without a measurable gain.
+        matcher = (VoiceMatcher(float(os.getenv('VOICE_MATCH_THRESHOLD', '1.2')), retries)
+                   if native_preset and not approved_paragraph and len(phrases) > 1 and retries > 0
+                   and gen_kwargs.get('temperature') != 0 else None)
 
         packet_bytes = max(4800, int(24000 * (buffer_ms if buffer_ms is not None else 600) / 1000) * 2)
         if progressive:
@@ -299,7 +326,7 @@ class SvaraTTSOrchestrator:
                 gain = FixedStreamingGain() if steady_volume else None
                 source = self._astream_one(
                     phrase, audio_reference=audio_reference, reference_text=reference_text,
-                    speaker_id=speaker_id, progressive=True,
+                    speaker_id=speaker_id, progressive=True, voice_matcher=matcher,
                     on_initial_pcm=gain.calibrate if gain else None, **gen_kwargs)
                 prepared = prepare_stream(source, speed, steady_volume, normalizer=gain)
                 async with aclosing(prepared):
@@ -320,7 +347,7 @@ class SvaraTTSOrchestrator:
         async def render(phrase: str) -> bytes:
             pcm = b''.join([part async for part in self._astream_one(
                 phrase, audio_reference=audio_reference, reference_text=reference_text,
-                speaker_id=speaker_id, **gen_kwargs)])
+                speaker_id=speaker_id, voice_matcher=matcher, **gen_kwargs)])
             return await prepare_phrase(pcm, phrase, speed, steady_volume)
 
         pending = asyncio.create_task(render(phrases[0]))
@@ -346,6 +373,7 @@ class SvaraTTSOrchestrator:
                            prebuffer_samples: Optional[int] = None,
                            progressive: bool = False,
                            on_initial_pcm: Optional[Callable[[bytes], None]] = None,
+                           voice_matcher: Optional[VoiceMatcher] = None,
                            **gen_kwargs) -> AsyncIterator[bytes]:
         selected_speaker = speaker_id or self.speaker_id
         prompt = svara_text_to_tokens(
@@ -356,22 +384,57 @@ class SvaraTTSOrchestrator:
         available = int(os.getenv('VLLM_MAX_MODEL_LEN', '4096')) - prompt_tokens - 8
         if available < 64:
             raise ValueError('Voice reference and text exceed the model context; use a shorter reference')
+        # A whole sentence can run about 30 seconds (about 82 tokens a second).
         default_tokens = (4096 if audio_reference is None and selected_speaker in PARAGRAPH_SPEAKERS
-                          else 2048)
+                          else 3072 if audio_reference is None else 2048)
         options = {**gen_kwargs, 'max_tokens': min(gen_kwargs.get('max_tokens', default_tokens), available)}
-        parser = SvaraFrameParser()
-        decoder = StreamingSNACDecoder(self.codec, on_initial_pcm) if progressive else None
-        source = self.transport.astream(prompt, **options)
-        async with aclosing(source):
-            async for token_text in source:
-                parser.feed_text(token_text)
-                if decoder is not None:
-                    while decoder.ready(len(parser.codes) // 7):
-                        yield await asyncio.to_thread(decoder.decode, list(parser.codes))
+        matcher = voice_matcher
+        # The first phrase defines the request's voice; later ones are judged
+        # against it and may be generated again.
+        defines_voice = matcher is not None and matcher.reference is None
+        attempts = 1 + (matcher.retries if matcher is not None and not defines_voice else 0)
+        heard = bytearray()
+        for attempt in range(attempts):
+            last_attempt = attempt == attempts - 1
+            parser = SvaraFrameParser()
+            decoder = StreamingSNACDecoder(self.codec, on_initial_pcm) if progressive else None
+            judged = matcher is None or defines_voice
+            different = False
+            source = self.transport.astream(prompt, **options)
+            async with aclosing(source):
+                async for token_text in source:
+                    parser.feed_text(token_text)
+                    frames = len(parser.codes) // 7
+                    if not judged and frames >= CHECK_FRAMES:
+                        judged = True
+                        different = await self._voice_differs(matcher, parser.codes, text, attempt, last_attempt)
+                        if different:
+                            break  # closing the source stops this generation
+                    # Nothing is decoded for playback until the voice is accepted.
+                    if decoder is not None and judged:
+                        while decoder.ready(len(parser.codes) // 7):
+                            piece = await asyncio.to_thread(decoder.decode, list(parser.codes))
+                            if len(heard) < REFERENCE_SECONDS * 48000:
+                                heard.extend(piece)
+                            yield piece
+            if not different and not judged and len(parser.codes) // 7 >= 14:
+                # A short phrase ended before the usual check point.
+                judged = True
+                different = await self._voice_differs(matcher, parser.codes, text, attempt, last_attempt)
+            if not different:
+                break
         if not parser.codes:
             raise RuntimeError('The speech model returned no complete audio frames')
+        adopt = matcher is not None and (defines_voice or matcher.reference is None
+                                         or getattr(matcher, 'replace', False))
         if decoder is not None:
             tail = await asyncio.to_thread(decoder.decode, list(parser.codes), True)
+            if tail:
+                if len(heard) < REFERENCE_SECONDS * 48000:
+                    heard.extend(tail)
+            if adopt and heard:
+                matcher.adopt(bytes(heard))
+                matcher.replace = False
             if tail:
                 yield tail
             return
@@ -379,4 +442,25 @@ class SvaraTTSOrchestrator:
         # crop dropped opening/final frames and introduced seams every 85 ms.
         pcm = await asyncio.to_thread(self.codec.decode_codes, parser.codes)
         if pcm:
+            if adopt:
+                matcher.adopt(pcm)
+                matcher.replace = False
             yield pcm
+
+    async def _voice_differs(self, matcher: VoiceMatcher, codes: List[int], text: str,
+                             attempt: int, last_attempt: bool) -> bool:
+        """True when this attempt should be dropped and the phrase generated again."""
+        opening = await asyncio.to_thread(self.codec.decode_codes, list(codes[:CHECK_FRAMES * 7]))
+        distance = matcher.distance(opening)
+        if distance is None or distance <= matcher.threshold:
+            logger.info(f'Voice check passed ({"n/a" if distance is None else f"{distance:.2f}"})')
+            return False
+        if last_attempt:
+            # No attempt matched: treat the newest voice as the request's voice
+            # from here on, rather than redoing every following phrase.
+            matcher.replace = True
+            logger.info(f'Voice differs ({distance:.2f}) after {attempt + 1} attempts; keeping it')
+            return False
+        logger.info(f'Voice differs ({distance:.2f}) from the opening phrase; '
+                    f'generating again (attempt {attempt + 2})')
+        return True
